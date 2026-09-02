@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseGuard | Multimodal Emergency Safety Assistant</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              bg: '#121212',
+              surface: '#1E1E1E',
+              card: '#252525',
+              border: '#333333',
+            },
+            cyan: {
+              accent: '#00E5FF',
+              glow: 'rgba(0, 229, 255, 0.25)',
+              hover: '#00B4D8'
+            },
+            crimson: {
+              alert: '#FF5252',
+              glow: 'rgba(255, 82, 82, 0.25)',
+              hover: '#FF1744'
+            },
+            subtext: '#B0BEC5'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #121212;
+      color: #FFFFFF;
+      font-family: 'Inter', sans-serif;
+    }
+    .neon-border-cyan {
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    }
+    .neon-border-crimson {
+      box-shadow: 0 0 20px rgba(255, 82, 82, 0.35);
+    }
+    .pulse-animation {
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.05); }
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121212;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333333;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00E5FF;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-dark-bg text-white flex flex-col justify-between antialiased selection:bg-cyan-accent selection:text-black">
+
+  <!-- Header Section -->
+  <header class="border-b border-dark-border bg-dark-surface sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-dark-bg border border-cyan-accent flex items-center justify-center neon-border-cyan">
+          <svg class="w-6 h-6 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-bold tracking-tight text-white">Pulse<span class="text-cyan-accent">Guard</span></span>
+            <span class="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider bg-dark-bg border border-dark-border text-subtext rounded">Gemini Multimodal</span>
+          </div>
+          <p class="text-xs text-subtext">Accessible Campus & Medical Emergency Safety Assistant</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions / GPS / API Config -->
+      <div class="flex items-center space-x-3">
+        <!-- Live GPS Indicator -->
+        <div id="gps-status-badge" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-dark-bg border border-dark-border text-xs text-subtext">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span id="gps-text">GPS: Acquiring...</span>
+        </div>
+
+        <!-- API Key Settings Modal Trigger -->
+        <button id="api-modal-btn" class="px-3 py-1.5 rounded-lg bg-dark-bg border border-dark-border hover:border-cyan-accent text-xs font-medium text-subtext hover:text-white transition flex items-center space-x-1.5">
+          <svg class="w-4 h-4 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+          <span id="api-key-status">API Key</span>
+        </button>
+
+        <!-- Emergency 911 Direct Call Button -->
+        <a href="tel:911" class="px-4 py-1.5 rounded-lg bg-crimson-alert hover:bg-crimson-hover text-white font-bold text-xs uppercase tracking-wider flex items-center space-x-1.5 neon-border-crimson transition transform active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+          </svg>
+          <span>Call 911</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
+    
+    <!-- Fast Preset Scenarios Bar -->
+    <div class="mb-6">
+      <p class="text-xs uppercase font-semibold text-subtext mb-2 tracking-wider">Quick Simulation Scenarios (One-Click Triage)</p>
+      <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-thin">
+        <button onclick="loadScenario('chemical_eye')" class="flex-shrink-0 px-3 py-1.5 bg-dark-surface hover:bg-dark-card border border-dark-border hover:border-cyan-accent text-xs rounded-lg text-white font-medium transition">
+          🧪 Acid Eye Splash
+        </button>
+        <button onclick="loadScenario('burn_severe')" class="flex-shrink-0 px-3 py-1.5 bg-dark-surface hover:bg-dark-card border border-dark-border hover:border-cyan-accent text-xs rounded-lg text-white font-medium transition">
+          🔥 2nd-Degree Scald Burn
+        </button>
+        <button onclick="loadScenario('arterial_bleed')" class="flex-shrink-0 px-3 py-1.5 bg-dark-surface hover:bg-dark-card border border-dark-border hover:border-crimson-alert text-xs rounded-lg text-white font-medium transition">
+          🩸 Deep Glass Cut (Bleeding)
+        </button>
+        <button onclick="loadScenario('heat_stroke')" class="flex-shrink-0 px-3 py-1.5 bg-dark-surface hover:bg-dark-card border border-dark-border hover:border-cyan-accent text-xs rounded-lg text-white font-medium transition">
+          ☀️ Heat Stroke Collapse
+        </button>
+        <button onclick="loadScenario('cardiac_arrest')" class="flex-shrink-0 px-3 py-1.5 bg-dark-surface hover:bg-dark-card border border-dark-border hover:border-crimson-alert text-xs rounded-lg text-white font-medium transition">
+          ⚡ Unconscious / No Pulse
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Grid: Multimodal Input Left (5 cols) | Safety Protocol Output Right (7 cols) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: Multimodal Input Controls -->
+      <div class="lg:col-span-5 space-y-5">
+        
+        <!-- Input Card -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-xl">
+          <h2 class="text-base font-bold text-white mb-3 flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-accent"></span>
+            <span>Multimodal Incident Input</span>
+          </h2>
+
+          <!-- Camera / Visual Hazard Upload Section -->
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-subtext uppercase tracking-wider mb-2">
+              Visual Hazard / Injury Image
+            </label>
+            
+            <div id="drop-area" class="border-2 border-dashed border-dark-border hover:border-cyan-accent rounded-xl p-4 text-center cursor-pointer transition bg-dark-bg relative group">
+              <input type="file" id="image-input" accept="image/*" class="hidden" />
+              
+              <!-- Image Preview or Placeholder -->
+              <div id="image-placeholder" class="space-y-2">
+                <div class="w-12 h-12 mx-auto rounded-full bg-dark-surface flex items-center justify-center text-cyan-accent group-hover:scale-110 transition transform">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p class="text-xs text-white font-medium">Click or Drag & Drop Photo / Hazard Sign</p>
+                <p class="text-[11px] text-subtext">Analyzed directly by Gemini Multimodal Vision</p>
+              </div>
+
+              <!-- Loaded Image Container -->
+              <div id="image-preview-wrapper" class="hidden relative">
+                <img id="image-preview" src="" alt="Incident Preview" class="w-full h-44 object-cover rounded-lg border border-dark-border" />
+                <button onclick="clearImage(event)" class="absolute top-2 right-2 bg-crimson-alert text-white rounded-full p-1.5 shadow-lg hover:bg-crimson-hover transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Camera Snapshot Button -->
+            <div class="mt-2 flex space-x-2">
+              <button id="webcam-btn" onclick="openCameraModal()" class="w-full py-1.5 bg-dark-bg hover:bg-dark-card border border-dark-border text-xs text-subtext hover:text-white rounded-lg transition flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                <span>Live Camera Snap</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Text / Voice Input Description -->
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-xs font-semibold text-subtext uppercase tracking-wider">
+                Symptoms & Situation Context
+              </label>
+              <!-- Voice Dictation Button -->
+              <button id="mic-btn" onclick="toggleVoiceDictation()" class="px-2.5 py-1 rounded-md bg-dark-bg border border-dark-border hover:border-cyan-accent text-xs font-medium text-cyan-accent flex items-center space-x-1.5 transition">
+                <svg id="mic-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                <span id="mic-label">Voice Input</span>
+              </button>
+            </div>
+            
+            <textarea id="incident-text" rows="3" class="w-full bg-dark-bg border border-dark-border focus:border-cyan-accent focus:ring-1 focus:ring-cyan-accent rounded-xl p-3 text-sm text-white placeholder-gray-500 transition outline-none resize-none" placeholder="Describe symptoms (e.g., severe chemical burn on hand, patient in extreme pain, chemical bottle says sulfuric acid)..."></textarea>
+          </div>
+
+          <!-- Bystander Language Selection -->
+          <div class="mb-5">
+            <label class="block text-xs font-semibold text-subtext uppercase tracking-wider mb-2">
+              Bystander Translation Language
+            </label>
+            <select id="target-language" class="w-full bg-dark-bg border border-dark-border focus:border-cyan-accent text-sm text-white rounded-xl p-2.5 outline-none cursor-pointer">
+  <option value="English" selected>English (Default)</option>
+  <option value="Spanish">Spanish (Español)</option>
+  <option value="French">French (Français)</option>
+  <option value="Hindi">Hindi (हिंदी)</option>
+  <option value="Mandarin">Mandarin (中文)</option>
+</select>
+          </div>
+
+          <!-- Analyze Action Button -->
+          <button id="analyze-btn" onclick="executeTriage()" class="w-full py-3.5 px-4 rounded-xl bg-cyan-accent hover:bg-cyan-hover text-black font-extrabold text-sm uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg transition transform active:scale-[0.98]">
+            <svg id="analyze-spinner" class="hidden w-5 h-5 animate-spin text-black" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span id="analyze-btn-text">Generate First-Aid Protocol</span>
+          </button>
+
+        </div>
+
+        <!-- Automatic Twilio SMS Alert Automation Panel -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-crimson-alert"></span>
+              <span>Emergency Dispatch Webhook</span>
+            </h3>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-dark-bg border border-dark-border text-subtext">Twilio / Webhook</span>
+          </div>
+          <p class="text-xs text-subtext mb-3">
+            Auto-dispatches SMS & geolocation dispatch payload when severity is CRITICAL or HIGH.
+          </p>
+          <div class="space-y-2">
+            <div class="flex items-center space-x-2">
+              <input type="text" id="webhook-url" value="http://localhost:5000/api/alert" class="w-full bg-dark-bg border border-dark-border text-xs text-subtext rounded-lg px-3 py-2 outline-none" placeholder="Webhook endpoint URL" />
+            </div>
+            <div class="flex space-x-2">
+              <button onclick="dispatchManualSMS()" class="w-full py-2 bg-dark-bg hover:bg-dark-card border border-crimson-alert text-crimson-alert font-bold text-xs rounded-lg transition flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                <span>Trigger Emergency SMS</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Output First-Aid Protocol & Structured Actions -->
+      <div class="lg:col-span-7 space-y-5">
+        
+        <!-- Detected Hazard Status Banner -->
+        <div id="hazard-banner" class="bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-xl transition">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <p class="text-[11px] uppercase font-semibold text-subtext tracking-wider">Detected Hazard</p>
+              <h2 id="hazard-title" class="text-xl font-extrabold text-white mt-0.5">
+                Awaiting Incident Data...
+              </h2>
+            </div>
+            <div id="severity-badge-container">
+              <span id="severity-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-dark-bg border border-dark-border text-subtext">
+                IDLE
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Critical Warning Alert Box (Crimson #FF5252) -->
+        <div id="critical-warning-box" class="hidden bg-dark-surface border-2 border-crimson-alert rounded-2xl p-5 neon-border-crimson transition">
+          <div class="flex items-start space-x-3.5">
+            <div class="w-10 h-10 rounded-xl bg-crimson-alert/20 border border-crimson-alert flex items-center justify-center flex-shrink-0 text-crimson-alert">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-crimson-alert uppercase tracking-wider mb-1">
+                CRITICAL SAFETY WARNING (DO NOT DO)
+              </h3>
+              <p id="critical-warning-text" class="text-sm font-medium text-white leading-relaxed">
+                Do not apply ice, butter, or ointments. Do not remove stuck clothing.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Immediate Protocol Action Steps (Neon Cyan Accents) -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-cyan-accent"></span>
+              <span>Immediate Action Protocol</span>
+            </h3>
+            <button id="read-all-btn" onclick="speakAllSteps()" class="px-3 py-1 bg-dark-bg border border-dark-border hover:border-cyan-accent text-xs font-semibold text-cyan-accent rounded-lg flex items-center space-x-1.5 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <span>Listen All Steps</span>
+            </button>
+          </div>
+
+          <!-- Step Cards Container -->
+          <div id="steps-container" class="space-y-3">
+            <div class="p-4 rounded-xl bg-dark-bg border border-dark-border text-center py-8 text-subtext text-sm">
+              Submit photo, voice, or select a scenario above to generate immediate step-by-step first aid.
+            </div>
+          </div>
+        </div>
+
+        <!-- Localized Bystander Translation Card -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-bold text-subtext uppercase tracking-wider flex items-center space-x-2">
+              <svg class="w-4 h-4 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+              </svg>
+              <span id="bystander-lang-title">Bystander Translation (Spanish)</span>
+            </h3>
+            <button id="pronounce-btn" onclick="pronounceTranslation()" class="px-3 py-1 bg-cyan-accent hover:bg-cyan-hover text-black font-bold text-xs rounded-lg flex items-center space-x-1.5 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <span>Speak Phrase</span>
+            </button>
+          </div>
+          <p id="bystander-phrase" class="text-base font-semibold text-cyan-accent italic bg-dark-bg p-3.5 rounded-xl border border-dark-border">
+            "¡Por favor, ayude! Necesitamos agua limpia inmediatamente para enjuagar los ojos."
+          </p>
+        </div>
+
+        <!-- Emergency Alert JSON Payload Viewer -->
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-bold text-subtext uppercase tracking-wider font-mono">
+              Emergency Action Dispatch JSON
+            </h3>
+            <button onclick="copyPayload()" class="text-xs text-cyan-accent hover:underline font-mono">
+              Copy JSON
+            </button>
+          </div>
+          <pre id="json-payload-display" class="bg-dark-bg p-3.5 rounded-xl border border-dark-border text-xs font-mono text-cyan-accent overflow-x-auto">
+{
+  "alert_trigger": false,
+  "severity": "IDLE",
+  "category": "NONE",
+  "summary": "No active emergency"
+}</pre>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-dark-border bg-dark-surface py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-subtext">
+      PulseGuard Multimodal Safety System • Powered by Google Gemini 2.5 / 1.5 Flash • Designed for Campus & Medical Emergency Response
+    </div>
+  </footer>
+
+  <!-- Camera Modal -->
+  <div id="camera-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-dark-surface border border-dark-border rounded-2xl p-5 max-w-lg w-full shadow-2xl">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-sm font-bold text-white uppercase">Live Camera Capture</h3>
+        <button onclick="closeCameraModal()" class="text-subtext hover:text-white">✕</button>
+      </div>
+      <video id="camera-video" autoplay playsinline class="w-full h-64 object-cover bg-black rounded-xl border border-dark-border mb-4"></video>
+      <div class="flex space-x-3">
+        <button onclick="snapPhoto()" class="w-full py-2.5 bg-cyan-accent hover:bg-cyan-hover text-black font-bold text-xs uppercase tracking-wider rounded-xl transition">
+          Capture Photo
+        </button>
+        <button onclick="closeCameraModal()" class="px-4 py-2.5 bg-dark-bg border border-dark-border text-subtext text-xs rounded-xl hover:text-white">
+          Cancel
+        </button>
+      </div>
+      <canvas id="camera-canvas" class="hidden"></canvas>
+    </div>
+  </div>
+
+  <!-- API Key Modal -->
+  <div id="api-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-dark-surface border border-dark-border rounded-2xl p-5 max-w-md w-full shadow-2xl">
+      <h3 class="text-sm font-bold text-white mb-2 flex items-center space-x-2">
+        <span class="w-2 h-2 rounded-full bg-cyan-accent"></span>
+        <span>Google Gemini API Key</span>
+      </h3>
+      <p class="text-xs text-subtext mb-4">
+        Enter your Gemini API key for live multimodal triage. If omitted, PulseGuard uses built-in AHA / Red Cross simulation protocols.
+      </p>
+      <input type="password" id="gemini-key-input" class="w-full bg-dark-bg border border-dark-border text-sm text-white rounded-xl p-3 mb-4 outline-none focus:border-cyan-accent font-mono" placeholder="AIzaSy..." />
+      <div class="flex justify-end space-x-2">
+        <button onclick="saveApiKey()" class="px-4 py-2 bg-cyan-accent text-black font-bold text-xs rounded-xl hover:bg-cyan-hover transition">
+          Save Key
+        </button>
+        <button onclick="closeApiModal()" class="px-4 py-2 bg-dark-bg border border-dark-border text-subtext text-xs rounded-xl hover:text-white">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    // State management
+    let currentImageBase64 = null;
+    let isRecordingVoice = false;
+    let speechRecognition = null;
+    let currentCoords = null;
+    let activeDataPayload = null;
+    let currentVoiceTranslation = "";
+    let currentLangCode = "es-ES";
+
+    const LANG_MAP = {
+      "Spanish": { code: "es-ES", title: "Bystander Translation (Spanish)" },
+      "French": { code: "fr-FR", title: "Bystander Translation (French)" },
+      "Hindi": { code: "hi-IN", title: "Bystander Translation (Hindi)" },
+      "Mandarin": { code: "zh-CN", title: "Bystander Translation (Mandarin)" },
+      "Arabic": { code: "ar-SA", title: "Bystander Translation (Arabic)" },
+      "German": { code: "de-DE", title: "Bystander Translation (German)" },
+      "Tagalog": { code: "tl-PH", title: "Bystander Translation (Tagalog)" },
+      "Japanese": { code: "ja-JP", title: "Bystander Translation (Japanese)" },
+      "Portuguese": { code: "pt-BR", title: "Bystander Translation (Portuguese)" }
+    };
+
+    // Initialize Geolocation
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          currentCoords = {
+            latitude: pos.coords.latitude.toFixed(5),
+            longitude: pos.coords.longitude.toFixed(5)
+          };
+          const badge = document.getElementById("gps-status-badge");
+          badge.classList.remove("hidden");
+          document.getElementById("gps-text").textContent = `GPS: ${currentCoords.latitude}, ${currentCoords.longitude}`;
+        },
+        (err) => {
+          console.warn("GPS Access not granted:", err.message);
+          document.getElementById("gps-text").textContent = "GPS: Unavailable";
+        }
+      );
+    }
+
+    // Check stored API Key
+    const storedKey = localStorage.getItem("pulseguard_gemini_key");
+    if (storedKey) {
+      document.getElementById("api-key-status").textContent = "API Key (Active)";
+    }
+
+    // Drag and Drop & Image Upload Handling
+    const dropArea = document.getElementById('drop-area');
+    const imageInput = document.getElementById('image-input');
+
+    dropArea.addEventListener('click', () => imageInput.click());
+    dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('border-cyan-accent'); });
+    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('border-cyan-accent'));
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('border-cyan-accent');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleImageFile(e.dataTransfer.files[0]);
+      }
+    });
+    imageInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleImageFile(e.target.files[0]);
+      }
+    });
+
+    function handleImageFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        currentImageBase64 = e.target.result;
+        document.getElementById('image-preview').src = currentImageBase64;
+        document.getElementById('image-placeholder').classList.add('hidden');
+        document.getElementById('image-preview-wrapper').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage(e) {
+      if (e) e.stopPropagation();
+      currentImageBase64 = null;
+      document.getElementById('image-input').value = "";
+      document.getElementById('image-placeholder').classList.remove('hidden');
+      document.getElementById('image-preview-wrapper').classList.add('hidden');
+    }
+
+    // Camera capture
+    let mediaStream = null;
+    function openCameraModal() {
+      const modal = document.getElementById('camera-modal');
+      modal.classList.remove('hidden');
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+          mediaStream = stream;
+          document.getElementById('camera-video').srcObject = stream;
+        })
+        .catch(err => {
+          alert('Could not access camera: ' + err.message);
+          closeCameraModal();
+        });
+    }
+
+    function closeCameraModal() {
+      document.getElementById('camera-modal').classList.add('hidden');
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+      }
+    }
+
+    function snapPhoto() {
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      currentImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('image-preview').src = currentImageBase64;
+      document.getElementById('image-placeholder').classList.add('hidden');
+      document.getElementById('image-preview-wrapper').classList.remove('hidden');
+      closeCameraModal();
+    }
+
+    // Voice Dictation
+    function toggleVoiceDictation() {
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRec) {
+        alert("Web Speech recognition not supported in this browser.");
+        return;
+      }
+
+      if (isRecordingVoice) {
+        speechRecognition.stop();
+        return;
+      }
+
+      speechRecognition = new SpeechRec();
+      speechRecognition.continuous = false;
+      speechRecognition.interimResults = false;
+      speechRecognition.lang = 'en-US';
+
+      speechRecognition.onstart = () => {
+        isRecordingVoice = true;
+        document.getElementById('mic-label').textContent = "Listening...";
+        document.getElementById('mic-btn').classList.add('bg-crimson-alert', 'text-white', 'pulse-animation');
+      };
+
+      speechRecognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        const textarea = document.getElementById('incident-text');
+        textarea.value = (textarea.value ? textarea.value + " " : "") + transcript;
+      };
+
+      speechRecognition.onerror = (e) => {
+        console.error("Speech error", e);
+      };
+
+      speechRecognition.onend = () => {
+        isRecordingVoice = false;
+        document.getElementById('mic-label').textContent = "Voice Input";
+        document.getElementById('mic-btn').classList.remove('bg-crimson-alert', 'text-white', 'pulse-animation');
+      };
+
+      speechRecognition.start();
+    }
+
+    // API Key Modal Functions
+    document.getElementById('api-modal-btn').addEventListener('click', () => {
+      document.getElementById('gemini-key-input').value = localStorage.getItem("pulseguard_gemini_key") || "";
+      document.getElementById('api-modal').classList.remove('hidden');
+    });
+    function closeApiModal() {
+      document.getElementById('api-modal').classList.add('hidden');
+    }
+    function saveApiKey() {
+      const key = document.getElementById('gemini-key-input').value.trim();
+      if (key) {
+        localStorage.setItem("pulseguard_gemini_key", key);
+        document.getElementById("api-key-status").textContent = "API Key (Active)";
+      } else {
+        localStorage.removeItem("pulseguard_gemini_key");
+        document.getElementById("api-key-status").textContent = "API Key";
+      }
+      closeApiModal();
+    }
+
+    // Preset Scenarios
+    const PRESETS = {
+      chemical_eye: {
+        text: "Acid splash in lab: Sulfuric acid splashed directly into right eye. Extreme stinging, redness, eye clamped shut.",
+        hazard: "Chemical Eye Splash (Acid)",
+        severity: "CRITICAL",
+        category: "CHEMICAL",
+        warning: "DO NOT rub the eye. DO NOT use neutralizing chemical washes or eye drops. Flush only with clean water.",
+        steps: [
+          { verb: "FLUSH", desc: "Immediately flush the affected eye with lukewarm water or saline eyewash for at least 15–20 minutes continuously." },
+          { verb: "HOLD OPEN", desc: "Gently hold the eyelids apart to ensure water reaches all surfaces beneath the lids." },
+          { verb: "REMOVE", desc: "Remove contact lenses immediately if present and easily removable without forcing." },
+          { verb: "CALL", desc: "Summon campus hazmat and emergency services immediately; keep flushing until medics arrive." }
+        ],
+        translation: {
+          Spanish: "¡Emergencia química! ¡Enjuague el ojo con abundante agua limpia de inmediato y llame a una ambulancia!",
+          French: "Urgence chimique ! Rincez immédiatement l'œil avec de l'eau propre et appelez une ambulance !",
+          Hindi: "रासायनिक आपातकाल! तुरंत आंख को साफ पानी से धोएं और एम्बुलेंस को बुलाएं!"
+        }
+      },
+      burn_severe: {
+        text: "Boiling water scald on forearm: Skin is bright red, blistered, and shedding. Patient is in severe pain.",
+        hazard: "Second-Degree Scald Burn",
+        severity: "HIGH",
+        category: "MEDICAL",
+        warning: "DO NOT pop blisters. DO NOT apply ice, butter, grease, or adhesive bandages directly to broken skin.",
+        steps: [
+          { verb: "COOL", desc: "Hold the burned area under cool running tap water for 10–15 minutes. Never use ice or freezing water." },
+          { verb: "REMOVE", desc: "Gently remove jewelry or tight clothing near the burn before swelling begins." },
+          { verb: "COVER", desc: "Loosely cover the burn with a sterile non-stick bandage or clean plastic wrap." },
+          { verb: "ELEVATE", desc: "Keep the affected limb elevated above heart level if possible to reduce swelling." }
+        ],
+        translation: {
+          Spanish: "¡Por favor ayude! Necesitamos agua fría corriente y vendas estériles para una quemadura grave.",
+          French: "Aidez-nous s'il vous plaît ! Nous avons besoin d'eau fraîche et de pansements stériles.",
+          Hindi: "कृपया मदद करें! गंभीर जलन के लिए हमें ठंडे पानी और साफ पट्टी की जरूरत है।"
+        }
+      },
+      arterial_bleed: {
+        text: "Deep glass laceration on wrist: Blood is spurting rhythmically and soaking through cloth rapidly.",
+        hazard: "Severe Arterial Bleeding",
+        severity: "CRITICAL",
+        category: "MEDICAL",
+        warning: "DO NOT remove the initial cloth if soaked—add more layers on top. DO NOT remove embedded glass shards.",
+        steps: [
+          { verb: "CALL", desc: "Call 911 or campus emergency dispatch immediately before administering aid." },
+          { verb: "APPLY PRESSURE", desc: "Place sterile gauze or clean cloth directly over the wound and apply firm, continuous direct pressure." },
+          { verb: "PACK & WRAP", desc: "Wrap firmly with a pressure bandage. If bleeding cannot be controlled, apply a commercial tourniquet 2-3 inches above the wound." },
+          { verb: "MONITOR", desc: "Keep the patient lying down, warm, and monitor for symptoms of hypovolemic shock." }
+        ],
+        translation: {
+          Spanish: "¡Hemorragia severa! ¡Aplique presión directa inmediatamente y llame al 911!",
+          French: "Hémorragie sévère ! Appliquez une pression directe immédiatement et appelez le 911 !",
+          Hindi: "गंभीर रक्तस्राव! तुरंत घाव पर सीधा दबाव डालें और आपातकालीन सेवा को कॉल करें!"
+        }
+      },
+      heat_stroke: {
+        text: "Athlete collapsed on field: Skin is hot, dry, and red. Confusion, slurred speech, high body temperature.",
+        hazard: "Exertional Heat Stroke",
+        severity: "CRITICAL",
+        category: "PHYSICAL",
+        warning: "DO NOT give fluids to an unconscious or disoriented person. DO NOT delay active rapid cooling.",
+        steps: [
+          { verb: "MOVE", desc: "Immediately move the person to a shaded or air-conditioned area." },
+          { verb: "COOL RAPIDLY", desc: "Immerse in cold water tub if available, or place ice packs in armpits, groin, and neck while fanning." },
+          { verb: "CALL", desc: "Alert emergency medical services immediately—heat stroke is life-threatening." },
+          { verb: "POSITION", desc: "Place in recovery position on their side if vomiting or losing consciousness." }
+        ],
+        translation: {
+          Spanish: "¡Golpe de calor crítico! ¡Traigan hielo y agua fría inmediatamente para enfriar al paciente!",
+          French: "Coup de chaleur critique ! Apportez de la glace et de l'eau froide immédiatement !",
+          Hindi: "गंभीर हीट स्ट्रोक! मरीज को तुरंत ठंडा करने के लिए बर्फ और पानी लाएं!"
+        }
+      },
+      cardiac_arrest: {
+        text: "Person collapsed suddenly, unresponsive, no normal breathing detected.",
+        hazard: "Suspected Sudden Cardiac Arrest",
+        severity: "CRITICAL",
+        category: "MEDICAL",
+        warning: "DO NOT leave the person alone. DO NOT hesitate to use an AED—it will not shock unless necessary.",
+        steps: [
+          { verb: "CALL 911", desc: "Call 911 immediately and shout for a bystander to locate the nearest Automated External Defibrillator (AED)." },
+          { verb: "START CPR", desc: "Place hands in center of chest and push hard and fast (100–120 beats/min) to the beat of 'Stayin' Alive'." },
+          { verb: "ATTACH AED", desc: "Turn on AED and follow voice prompts immediately as soon as it arrives." },
+          { verb: "CONTINUE", desc: "Do not stop compressions until medics take over or victim shows clear signs of life." }
+        ],
+        translation: {
+          Spanish: "¡Emergencia cardíaca! ¡Traigan un desfibrilador (DEA) y llamen al 911 de inmediato!",
+          French: "Arrêt cardiaque ! Apportez un défibrillateur (DAE) et appelez le 911 immédiatement !",
+          Hindi: "हार्ट अटैक आपातकाल! तुरंत डिफाइब्रिलेटर (AED) लाएं और 911 पर कॉल करें!"
+        }
+      }
+    };
+
+    function loadScenario(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+      document.getElementById('incident-text').value = p.text;
+      renderProtocolResult(p);
+    }
+
+    // Main Execution Flow (Gemini Multimodal API or Local Engine)
+    async function executeTriage() {
+      const text = document.getElementById('incident-text').value.trim();
+      const targetLang = document.getElementById('target-language').value;
+      const apiKey = localStorage.getItem('pulseguard_gemini_key');
+
+      if (!text && !currentImageBase64) {
+        alert("Please provide an incident description or upload a photo.");
+        return;
+      }
+
+      setLoading(true);
+
+      if (apiKey) {
+        try {
+          await callGeminiMultimodal(apiKey, text, currentImageBase64, targetLang);
+        } catch (err) {
+          console.error("Gemini API Error:", err);
+          alert("Gemini API Error: " + err.message + ". Falling back to local offline safety protocol.");
+          fallbackLocalTriage(text, targetLang);
+        }
+      } else {
+        // High fidelity offline triage
+        setTimeout(() => {
+          fallbackLocalTriage(text, targetLang);
+        }, 400);
+      }
+      setLoading(false);
+    }
+
+    async function callGeminiMultimodal(apiKey, text, imageBase64, targetLang) {
+      const systemPrompt = `You are PulseGuard, an accessible, low-latency multimodal safety assistant designed for campus medical and environmental emergencies. Your priority is to deliver fast, clear, actionable guidance with zero unnecessary filler.
+
+OPERATIONAL RULES:
+1. Safety Triage First: If life-threatening, output prominent warning to call emergency services.
+2. Multimodal Analysis: Base instructions on visual evidence & symptoms.
+3. Output format strictly matching:
+DETECTED HAZARD: [3-5 words]
+IMMEDIATE ACTION PROTOCOL:
+1. [Action Verb]: [Brief instruction]
+2. [Action Verb]: [Brief instruction]
+3. [Action Verb]: [Brief instruction]
+CRITICAL WARNING: [What NOT to do]
+BYSTANDER TRANSLATION (${targetLang}):
+"[Translated 1-sentence phrase for bystanders]"
+
+\`\`\`json
+{
+  "alert_trigger": boolean,
+  "severity": "CRITICAL" | "HIGH" | "MODERATE" | "LOW",
+  "category": "MEDICAL" | "FIRE" | "CHEMICAL" | "PHYSICAL",
+  "summary": "1-line summary"
+}
+\`\`\``;
+
+      const userParts = [];
+      if (text) {
+        userParts.push({ text: `Incident Context: ${text}\nTarget Language: ${targetLang}` });
+      }
+      if (imageBase64) {
+        const base64Data = imageBase64.split(',')[1];
+        const mimeType = imageBase64.split(';')[0].split(':')[1];
+        userParts.push({
+          inlineData: {
+            mimeType: mimeType,
+            data: base64Data
+          }
+        });
+      }
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ parts: userParts }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 1000
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
+
+      const data = await response.json();
+      const rawText = data.candidates[0].content.parts[0].text;
+      parseAndRenderGeminiOutput(rawText, targetLang);
+    }
+
+    function parseAndRenderGeminiOutput(rawText, targetLang) {
+      let hazard = "Emergency Incident";
+      let steps = [];
+      let warning = "Seek immediate professional medical assistance.";
+      let translation = "";
+      let jsonPayload = {
+        alert_trigger: true,
+        severity: "CRITICAL",
+        category: "MEDICAL",
+        summary: "Emergency incident detected"
+      };
+
+      // Parse DETECTED HAZARD
+      const hazardMatch = rawText.match(/DETECTED HAZARD:\s*(.+)/i);
+      if (hazardMatch) hazard = hazardMatch[1].trim();
+
+      // Parse CRITICAL WARNING
+      const warningMatch = rawText.match(/CRITICAL WARNING:\s*(.+)/i) || rawText.match(/>\s*\*\*CRITICAL WARNING:\*\*\s*(.+)/i);
+      if (warningMatch) warning = warningMatch[1].trim();
+
+      // Parse BYSTANDER TRANSLATION
+      const transMatch = rawText.match(/BYSTANDER TRANSLATION[^:]*:\s*["“]?([^"”\n\r]+)["”]?/i);
+      if (transMatch) translation = transMatch[1].trim();
+
+      // Parse Steps
+      const stepLines = rawText.split('\n');
+      stepLines.forEach(line => {
+        const m = line.match(/^\s*\d+\.\s*\*\*?([^*:]+)\*\*?:\s*(.+)/);
+        if (m) {
+          steps.push({ verb: m[1].trim(), desc: m[2].trim() });
+        }
+      });
+
+      // Parse JSON block
+      const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        try {
+          jsonPayload = JSON.parse(jsonMatch[1]);
+        } catch (e) {
+          console.warn("JSON parse error from Gemini", e);
+        }
+      }
+
+      if (steps.length === 0) {
+        steps = [
+          { verb: "CALL", desc: "Summon local emergency dispatch immediately." },
+          { verb: "STABILIZE", desc: "Keep patient calm and avoid sudden movements." },
+          { verb: "MONITOR", desc: "Watch breathing and vital signs until first responders arrive." }
+        ];
+      }
+
+      const parsedData = {
+        hazard: hazard,
+        severity: jsonPayload.severity || "CRITICAL",
+        category: jsonPayload.category || "MEDICAL",
+        warning: warning,
+        steps: steps,
+        translation: { [targetLang]: translation || "¡Por favor ayude! Necesitamos asistencia médica inmediata." },
+        jsonPayload: jsonPayload
+      };
+
+      renderProtocolResult(parsedData);
+    }
+
+    function fallbackLocalTriage(text, targetLang) {
+      const lower = text.toLowerCase();
+      let selected = PRESETS.chemical_eye;
+
+      if (lower.includes('burn') || lower.includes('scald') || lower.includes('fire') || lower.includes('hot')) {
+        selected = PRESETS.burn_severe;
+      } else if (lower.includes('bleed') || lower.includes('cut') || lower.includes('laceration') || lower.includes('glass')) {
+        selected = PRESETS.arterial_bleed;
+      } else if (lower.includes('heat') || lower.includes('collapse') || lower.includes('faint') || lower.includes('sun')) {
+        selected = PRESETS.heat_stroke;
+      } else if (lower.includes('heart') || lower.includes('pulse') || lower.includes('cpr') || lower.includes('unconscious') || lower.includes('aed')) {
+        selected = PRESETS.cardiac_arrest;
+      }
+
+      renderProtocolResult(selected);
+    }
+
+    function renderProtocolResult(data) {
+      activeDataPayload = data;
+      const targetLang = document.getElementById('target-language').value;
+      const langInfo = LANG_MAP[targetLang] || LANG_MAP["Spanish"];
+      currentLangCode = langInfo.code;
+
+      // Update Hazard Banner
+      document.getElementById('hazard-title').textContent = data.hazard;
+      
+      const badge = document.getElementById('severity-badge');
+      badge.textContent = data.severity;
+      badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ";
+      if (data.severity === "CRITICAL") {
+        badge.className += "bg-crimson-alert text-white neon-border-crimson";
+      } else if (data.severity === "HIGH") {
+        badge.className += "bg-amber-500 text-black";
+      } else {
+        badge.className += "bg-cyan-accent text-black";
+      }
+
+      // Update Critical Warning
+      const warningBox = document.getElementById('critical-warning-box');
+      if (data.warning) {
+        warningBox.classList.remove('hidden');
+        document.getElementById('critical-warning-text').textContent = data.warning;
+      } else {
+        warningBox.classList.add('hidden');
+      }
+
+      // Update Steps
+      const stepsContainer = document.getElementById('steps-container');
+      stepsContainer.innerHTML = '';
+      data.steps.forEach((step, idx) => {
+        const stepEl = document.createElement('div');
+        stepEl.id = `step-card-${idx}`;
+        stepEl.className = "p-4 rounded-xl bg-dark-bg border border-dark-border hover:border-cyan-accent transition flex items-start space-x-3.5";
+        stepEl.innerHTML = `
+          <div class="w-8 h-8 rounded-lg bg-dark-surface border border-cyan-accent flex items-center justify-center flex-shrink-0 text-cyan-accent font-bold text-xs">
+            ${idx + 1}
+          </div>
+          <div class="flex-grow">
+            <h4 class="text-sm font-bold text-cyan-accent uppercase tracking-wide mb-0.5">${step.verb}</h4>
+            <p class="text-sm text-white leading-relaxed">${step.desc}</p>
+          </div>
+          <button onclick="speakStep('${step.verb}. ${step.desc.replace(/'/g, "\\'")}', ${idx})" class="text-subtext hover:text-cyan-accent p-1.5 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+          </button>
+        `;
+        stepsContainer.appendChild(stepEl);
+      });
+
+      // Update Bystander Translation
+      document.getElementById('bystander-lang-title').textContent = langInfo.title;
+      const transText = (data.translation && (data.translation[targetLang] || data.translation.Spanish)) || "Please help! Emergency assistance needed immediately.";
+      currentVoiceTranslation = transText;
+      document.getElementById('bystander-phrase').textContent = `"${transText}"`;
+
+      // Update JSON payload
+      const fullPayload = {
+        alert_trigger: data.severity === "CRITICAL" || data.severity === "HIGH",
+        severity: data.severity,
+        category: data.category || "MEDICAL",
+        hazard: data.hazard,
+        summary: `${data.severity}: ${data.hazard}. Immediate response initiated.`,
+        critical_warning: data.warning,
+        geolocation: currentCoords ? {
+          lat: currentCoords.latitude,
+          lng: currentCoords.longitude,
+          maps_link: `https://www.google.com/maps?q=${currentCoords.latitude},${currentCoords.longitude}`
+        } : null,
+        timestamp: new Date().toISOString()
+      };
+
+      document.getElementById('json-payload-display').textContent = JSON.stringify(fullPayload, null, 2);
+
+      // Trigger automatic webhook alert if critical
+      if (fullPayload.alert_trigger) {
+        sendWebhookAlert(fullPayload);
+      }
+    }
+
+    // Audio Speech Pronunciation
+    function pronounceTranslation() {
+      if (!currentVoiceTranslation) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(currentVoiceTranslation);
+      utter.lang = currentLangCode;
+      utter.rate = 0.9;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function speakStep(text, idx) {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'en-US';
+      
+      const card = document.getElementById(`step-card-${idx}`);
+      if (card) card.classList.add('border-cyan-accent', 'bg-dark-surface');
+      utter.onend = () => {
+        if (card) card.classList.remove('border-cyan-accent', 'bg-dark-surface');
+      };
+      window.speechSynthesis.speak(utter);
+    }
+
+    function speakAllSteps() {
+      if (!activeDataPayload || !activeDataPayload.steps) return;
+      window.speechSynthesis.cancel();
+      let index = 0;
+
+      function speakNext() {
+        if (index >= activeDataPayload.steps.length) return;
+        const s = activeDataPayload.steps[index];
+        const utter = new SpeechSynthesisUtterance(`Step ${index + 1}. ${s.verb}. ${s.desc}`);
+        utter.lang = 'en-US';
+        
+        const card = document.getElementById(`step-card-${index}`);
+        if (card) card.classList.add('border-cyan-accent', 'bg-dark-surface');
+        
+        utter.onend = () => {
+          if (card) card.classList.remove('border-cyan-accent', 'bg-dark-surface');
+          index++;
+          speakNext();
+        };
+        window.speechSynthesis.speak(utter);
+      }
+
+      speakNext();
+    }
+
+    // Webhook / Twilio Dispatch
+    async function sendWebhookAlert(payload) {
+      const endpoint = document.getElementById('webhook-url').value.trim();
+      if (!endpoint) return;
+
+      try {
+        console.log("Sending emergency payload to Twilio Webhook:", payload);
+        await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        console.warn("Webhook dispatch offline / local demo mode:", e.message);
+      }
+    }
+
+    function dispatchManualSMS() {
+      if (!activeDataPayload) {
+        loadScenario('chemical_eye');
+      }
+      const payload = JSON.parse(document.getElementById('json-payload-display').textContent);
+      sendWebhookAlert(payload);
+      
+      const maps = payload.geolocation ? `\nLocation: ${payload.geolocation.maps_link}` : '';
+      const msg = encodeURIComponent(`🚨 [EMERGENCY SOS - PulseGuard] ${payload.summary}${maps}`);
+      window.open(`sms:?body=${msg}`, '_blank');
+    }
+
+    function copyPayload() {
+      const code = document.getElementById('json-payload-display').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        alert("JSON payload copied to clipboard.");
+      });
+    }
+
+    function setLoading(isLoading) {
+      const btn = document.getElementById('analyze-btn');
+      const spinner = document.getElementById('analyze-spinner');
+      const text = document.getElementById('analyze-btn-text');
+      if (isLoading) {
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        text.textContent = "Analyzing Hazards...";
+      } else {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = "Generate First-Aid Protocol";
+      }
+    }
+  </script>
+</body>
+</html>
